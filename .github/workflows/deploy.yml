@@ -29,7 +29,11 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ap-south-1
+
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
 
       # ✅ Login to ECR
       - name: Login to Amazon ECR
@@ -60,10 +64,7 @@ jobs:
 
       # ✅ Update kubeconfig
       - name: Update kubeconfig
-        run: |
-          aws eks update-kubeconfig \
-            --name $EKS_CLUSTER_NAME \
-            --region $AWS_REGION
+        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ap-south-1
 
       # ✅ Deploy to EKS
       - name: Deploy to EKS
