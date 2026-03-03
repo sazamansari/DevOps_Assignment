@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const { Pool } = require('pg');
 const { SecretsManagerClient, GetSecretValueCommand } = require("@aws-sdk/client-secrets-manager");
@@ -13,10 +14,10 @@ async function getSecret() {
   if (!secretName) {
     console.warn("SECRET_NAME not provided, using env vars for DB config");
     return {
-      host: process.env.DB_HOST,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
+      host: process.env.DB_HOST || 'localhost',
+      user: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD || 'postgres',
+      database: process.env.DB_NAME || 'postgres',
       port: process.env.DB_PORT || 5432
     };
   }
@@ -36,32 +37,38 @@ async function getSecret() {
 async function initDb() {
   try {
     const secrets = await getSecret();
-    pool = new Pool({
+    const config = {
       host: secrets.host,
       user: secrets.username || secrets.user,
       password: secrets.password,
       database: secrets.database,
       port: secrets.port,
-      ssl: { rejectUnauthorized: false }
-    });
+    };
+
+    // Enable SSL only if DB_SSL is true or if we are using Secrets Manager (AWS context)
+    if (process.env.DB_SSL === 'true' || secretName) {
+      config.ssl = { rejectUnauthorized: false };
+    }
+
+    pool = new Pool(config);
     console.log("DB Pool initialized");
   } catch (error) {
     console.error("DB Init failed:", error);
   }
 }
 
-app.get('/health', (req, res) => {
+app.get(['/health', '/api/health'], (req, res) => {
   res.status(200).send('OK');
 });
 
-app.get('/ready', async (req, res) => {
+app.get(['/ready', '/api/ready'], async (req, res) => {
   if (!pool) {
     return res.status(500).json({ status: "error", message: "DB pool not initialized" });
   }
   try {
     const result = await pool.query('SELECT version();');
-    res.status(200).json({ 
-      status: "ready", 
+    res.status(200).json({
+      status: "ready",
       db_version: result.rows[0].version,
       commit_sha: process.env.COMMIT_SHA || "unknown"
     });
