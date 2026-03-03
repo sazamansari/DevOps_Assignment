@@ -18,7 +18,7 @@ resource "aws_iam_policy" "secrets_manager_access" {
 }
 
 module "irsa_role" {
-  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  source  = "terraform-aws-modules/iam/aws
   version = "~> 5.0"
 
   role_name = "${var.project_name}-backend-irsa"

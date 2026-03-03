@@ -45,7 +45,6 @@ async function initDb() {
       port: secrets.port,
     };
 
-    // Enable SSL only if DB_SSL is true or if we are using Secrets Manager (AWS context)
     if (process.env.DB_SSL === 'true' || secretName) {
       config.ssl = { rejectUnauthorized: false };
     }

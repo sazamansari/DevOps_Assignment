@@ -60,7 +60,6 @@ module "monitoring" {
   region       = var.region
 }
 
-# Outputs
 output "cluster_name" {
   value = module.eks.cluster_name
 }
